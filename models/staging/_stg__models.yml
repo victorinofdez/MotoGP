@@ -1,21 +1,60 @@
 version: 2
 
 models:
+
   - name: stg_season
     description: >
       Temporadas del campeonato. Una fila por año.
     columns:
       - name: season_id
+        data_type: varchar
         description: UUID de la temporada.
         tests:
           - unique
           - not_null
       - name: year
+        data_type: int
         description: Año de la temporada.
         tests:
           - not_null
       - name: is_current
+        data_type: bool
         description: Indica si esta temporada es la actual.
         tests:
           - not_null
-          
+  
+  - name: stg_category
+    description: Categorías de competición (MotoGP, Moto2, Moto3, 125cc, 250cc, Sidecar, etc.).
+    columns:
+      - name: category_id
+        data_type: varchar
+        description: Identificador category_id
+        tests:
+          - not_null
+          - unique
+
+      - name: name
+        data_type: varchar
+        description: Nombre de la categoría (e.g. "MotoGP", "Moto2", "125cc").
+        tests:
+          - not_null
+          - unique
+
+      - name: legacy_id
+        data_type: number
+        description: ID numérico heredado de sistemas anteriores.
+        tests:
+          - not_null
+          - unique
+
+      - name: class_tier
+        data_type: varchar
+        description: >
+          Agrupa las categorías por nivel competitivo. Permite filtrar entre eras
+          sin listar nombres explícitos (e.g. "Premier" incluye 500cc y MotoGP™).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Premier', 'Intermediate', 'Junior', 'Historical']
+
+      
