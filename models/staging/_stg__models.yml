@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_season
+    description: >
+      Temporadas del campeonato. Una fila por año.
+    columns:
+      - name: season_id
+        description: UUID de la temporada.
+        tests:
+          - unique
+          - not_null
+      - name: year
+        description: Año de la temporada.
+        tests:
+          - not_null
+      - name: is_current
+        description: Indica si esta temporada es la actual.
+        tests:
+          - not_null
+          

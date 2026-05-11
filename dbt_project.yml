@@ -42,9 +42,11 @@ models:
   MotoGP:
 
     staging:
-      +materialized: view
+      +materialized: table
+      +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
 
     marts:
       +materialized: table
+      +schema: GOLD
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_GOLD_DB"
