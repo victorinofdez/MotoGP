@@ -1,0 +1,640 @@
+
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Capa Bronze (RAW) del proyecto MotoGP. Contiene los datos ingestados directamente
+      desde la API oficial de MotoGP, sin transformaciones. Los datos cubren desde 1949
+      hasta la temporada en curso.
+      Todas las tablas incluyen columnas de auditoría prefijadas con `_`.
+    database: DEV_MOTOGP_BRONZE_DB
+    schema: RAW
+
+    tables:
+
+      # ─────────────────────────────────────────────
+      # SEASONS
+      # ─────────────────────────────────────────────
+      - name: seasons
+        description: >
+          Catálogo de temporadas del Campeonato del Mundo de MotoGP.
+          Una fila por temporada. Es la entidad raíz del modelo: todo
+          evento, categoría y resultado cuelga de un season_id/year.
+        columns:
+          - name: id
+            description: Identificador UUID de la temporada en la API de MotoGP.
+          - name: name
+            description: Nombre textual de la temporada (generalmente el año como string).
+          - name: year
+            description: Año de la temporada (entero).
+          - name: is_current
+            description: >
+              Indica si esta temporada es la actual al momento de la ingesta
+              (1 = sí, 0 = no). Útil para filtrar la temporada en curso.
+          - name: md5
+            description: Hash MD5 del registro fuente. Permite detectar cambios en re-ingestas.
+          - name: _year
+            description: Año de partición del archivo fuente. Coincide con `year`.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen (e.g. motogp_data_2024_2026).
+          - name: _ingested_at
+            description: Timestamp UTC de cuando el registro fue insertado en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # CATEGORIES
+      # ─────────────────────────────────────────────
+      - name: categories
+        description: >
+          Categorías de competición por año (MotoGP, Moto2, Moto3, 125cc, 250cc, Sidecar, etc.).
+          Una fila por categoría activa en cada temporada. Permite saber qué clases
+          compitieron en un año determinado.
+        columns:
+          - name: id
+            description: Identificador UUID de la categoría en la API de MotoGP.
+          - name: legacy_id
+            description: ID numérico heredado de sistemas anteriores. Útil para joins con datos históricos pre-2010.
+          - name: name
+            description: Nombre de la categoría (e.g. "MotoGP", "Moto2", "125cc").
+          - name: year
+            description: Año al que pertenece esta categoría.
+          - name: md5
+            description: Hash MD5 del registro fuente para detección de cambios.
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # CALENDAR
+      # ─────────────────────────────────────────────
+      - name: calendar
+        description: >
+          Calendario completo de la temporada. El CSV de origen tiene un formato wide
+          (una fila por temporada con columnas calendar_N_* para cada Gran Premio).
+          Normalizado a una fila por evento del calendario.
+          Incluye tanto carreras oficiales como tests de pretemporada.
+        columns:
+          - name: season
+            description: Año de la temporada a la que pertenece este evento del calendario.
+          - name: calendar_index
+            description: >
+              Posición ordinal del evento dentro del calendario de la temporada
+              (0-based en el CSV de origen).
+          - name: id
+            description: UUID del evento en la API de MotoGP.
+          - name: shortname
+            description: Abreviación del Gran Premio (e.g. "QAT", "SPA", "ITA").
+          - name: name
+            description: Nombre oficial del Gran Premio (e.g. "Gran Premio de España").
+          - name: hashtag
+            description: Hashtag oficial del evento para redes sociales (e.g. "#SpanishGP").
+          - name: circuit
+            description: Nombre del circuito donde se celebra el evento.
+          - name: country_code
+            description: Código ISO 3166-1 alpha-3 del país anfitrión.
+          - name: country
+            description: Nombre del país anfitrión.
+          - name: start_date
+            description: Fecha de inicio del fin de semana de carreras.
+          - name: end_date
+            description: Fecha de fin del fin de semana de carreras.
+          - name: local_tz_offset
+            description: Offset de zona horaria local respecto a UTC (e.g. "+02:00").
+          - name: test
+            description: "TRUE si el evento es un test de pretemporada; FALSE si es un Gran Premio oficial."
+          - name: has_timing
+            description: "TRUE si el evento cuenta con datos de timing disponibles en la API."
+          - name: friendly_name
+            description: Nombre amigable del evento para mostrar en interfaces.
+          - name: dates
+            description: Rango de fechas en formato legible (e.g. "14-16 Mar").
+          - name: last_session_end_time
+            description: Timestamp con zona horaria del fin de la última sesión del evento.
+          - name: key_session_times
+            description: >
+              Objeto JSON (VARIANT) con los horarios de las sesiones clave del evento
+              (clasificación, carrera, sprint, etc.).
+          - name: is_upcoming
+            description: "TRUE si el evento aún no ha ocurrido al momento de la ingesta."
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # EVENTS
+      # ─────────────────────────────────────────────
+      - name: events
+        description: >
+          Grandes Premios disputados por año. Una fila por evento (Gran Premio).
+          Contiene información detallada del circuito, país, fechas y links de
+          navegación a recursos estadísticos de la API.
+        columns:
+          - name: id
+            description: UUID del evento en la API de MotoGP. Clave primaria.
+          - name: country_iso
+            description: Código ISO 3166-1 alpha-3 del país del Gran Premio.
+          - name: country_name
+            description: Nombre del país anfitrión.
+          - name: country_region_iso
+            description: Código ISO de la región del país (si aplica).
+          - name: event_circuit_information_url
+            description: URL de la API con información detallada del circuito.
+          - name: event_circuit_information_menu_position
+            description: Posición en el menú de navegación de la API para el recurso de información del circuito.
+          - name: event_podiums_url
+            description: URL de la API con el historial de podios en este circuito.
+          - name: event_podiums_menu_position
+            description: Posición en el menú de navegación de la API para podios.
+          - name: event_pole_positions_url
+            description: URL de la API con el historial de poles en este circuito.
+          - name: event_pole_positions_menu_position
+            description: Posición en el menú de navegación de la API para poles.
+          - name: event_nations_statistics_url
+            description: URL de la API con estadísticas por nación en este evento.
+          - name: event_nations_statistics_menu_position
+            description: Posición en el menú de navegación de la API para estadísticas por nación.
+          - name: event_riders_all_time_url
+            description: URL de la API con el historial all-time de pilotos en este circuito.
+          - name: event_riders_all_time_menu_position
+            description: Posición en el menú de navegación de la API para historial de pilotos.
+          - name: circuit_id
+            description: UUID del circuito en la API de MotoGP.
+          - name: circuit_name
+            description: Nombre oficial del circuito.
+          - name: circuit_legacy_id
+            description: ID numérico heredado del circuito para compatibilidad con datos históricos.
+          - name: circuit_place
+            description: Ciudad o localidad donde se ubica el circuito.
+          - name: circuit_nation
+            description: País donde se ubica el circuito (código de nación).
+          - name: test
+            description: "TRUE si el evento es un test de pretemporada."
+          - name: sponsored_name
+            description: Nombre comercial del evento con patrocinador (e.g. "Gran Premio Repsol de España").
+          - name: date_end
+            description: Fecha de finalización del evento.
+          - name: toad_api_uuid
+            description: UUID interno del sistema TOAD de la API oficial.
+          - name: date_start
+            description: Fecha de inicio del evento.
+          - name: name
+            description: Nombre oficial del Gran Premio sin sponsor.
+          - name: season_id
+            description: UUID de la temporada a la que pertenece este evento.
+          - name: year
+            description: Año de la temporada. Clave de partición y join natural.
+          - name: season_current
+            description: Indicador de si la temporada estaba en curso al momento de la ingesta.
+          - name: short_name
+            description: Abreviación del Gran Premio (e.g. "QAT", "SPA").
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # SESSIONS
+      # ─────────────────────────────────────────────
+      - name: sessions
+        description: >
+          Sesiones de cada Gran Premio por categoría y año. Una fila por sesión.
+          Tipos posibles según datos reales: FP (práctica libre), P (práctica combinada),
+          TTS (test/time trial), QP (qualifying pre-2012), Q (qualifying), RAC (carrera),
+          SPR (sprint), WUP (warm-up), EP (extra practice), PR (practice race).
+          Contiene condiciones meteorológicas y URLs de recursos de análisis de la API.
+          NOTA: los sprints históricos (pre-2023) pueden tener status "Unofficial".
+          Particionada por _year + _event_id + _category_id.
+        columns:
+          - name: id
+            description: UUID de la sesión en la API de MotoGP. Clave primaria.
+          - name: date
+            description: Fecha y hora de inicio de la sesión (con zona horaria).
+          - name: number
+            description: Número ordinal de la sesión dentro del evento.
+          - name: track_condition
+            description: "Condición de la pista al inicio de la sesión (e.g. Dry, Wet)."
+          - name: air_condition
+            description: "Condición del aire (e.g. Dry, Humid)."
+          - name: humidity_condition
+            description: Nivel de humedad registrado durante la sesión.
+          - name: ground_condition
+            description: Condición del suelo/asfalto de la pista.
+          - name: weather_condition
+            description: "Condición meteorológica general (e.g. Sunny, Cloudy, Rain)."
+          - name: circuit_name
+            description: Nombre del circuito donde se celebra la sesión.
+          - name: classification_url
+            description: URL de la API para obtener la clasificación de esta sesión.
+          - name: classification_menu_position
+            description: Posición en el menú de navegación de la API.
+          - name: analysis_url
+            description: URL de la API para análisis detallado de la sesión.
+          - name: analysis_menu_position
+            description: Posición en el menú de navegación de la API para análisis.
+          - name: average_speed_url
+            description: URL de la API con datos de velocidad media.
+          - name: average_speed_menu_position
+            description: Posición en el menú para velocidad media.
+          - name: fast_lap_sequence_url
+            description: URL de la API con la secuencia de vueltas rápidas.
+          - name: fast_lap_sequence_menu_position
+            description: Posición en el menú para secuencia de vueltas rápidas.
+          - name: lap_chart_url
+            description: URL de la API con el gráfico de posiciones por vuelta.
+          - name: lap_chart_menu_position
+            description: Posición en el menú para el gráfico de vueltas.
+          - name: analysis_by_lap_url
+            description: URL de la API con análisis vuelta a vuelta.
+          - name: analysis_by_lap_menu_position
+            description: Posición en el menú para análisis por vuelta.
+          - name: fast_lap_rider_url
+            description: URL de la API con la vuelta rápida del piloto más rápido.
+          - name: fast_lap_rider_menu_position
+            description: Posición en el menú para vuelta rápida.
+          - name: grid_url
+            description: URL de la API con la parrilla de salida.
+          - name: grid_menu_position
+            description: Posición en el menú para la parrilla.
+          - name: session_url
+            description: URL canónica de la sesión en la API.
+          - name: session_menu_position
+            description: Posición en el menú para el recurso de sesión.
+          - name: world_standing_url
+            description: URL de la API con el campeonato mundial después de esta sesión.
+          - name: world_standing_menu_position
+            description: Posición en el menú para el campeonato mundial.
+          - name: best_partial_time_url
+            description: URL de la API con los mejores tiempos parciales (sectores).
+          - name: best_partial_time_menu_position
+            description: Posición en el menú para tiempos parciales.
+          - name: maximum_speed_url
+            description: URL de la API con las velocidades máximas de la sesión.
+          - name: maximum_speed_menu_position
+            description: Posición en el menú para velocidades máximas.
+          - name: combined_practice_url
+            description: URL de la API con la práctica combinada (Q1 combinada en formato post-2022).
+          - name: combined_practice_menu_position
+            description: Posición en el menú para práctica combinada.
+          - name: combined_classification_url
+            description: URL de la API con la clasificación combinada.
+          - name: combined_classification_menu_position
+            description: Posición en el menú para clasificación combinada.
+          - name: type
+            description: >
+              Tipo de sesión. Valores reales observados en los datos:
+              FP (Free Practice), P (Combined Practice), TTS (Test/Time Trial),
+              QP (Qualifying Practice, pre-2012), Q (Qualifying), RAC (Race),
+              SPR (Sprint), WUP (Warm Up), EP (Extra Practice), PR (Practice Race).
+              IMPORTANTE: valores como FP1/FP2/Q1/Q2 NO existen en raw; son
+              interpretaciones del número de sesión que se resuelven en silver.
+          - name: category_id
+            description: UUID de la categoría (MotoGP, Moto2, Moto3…) a la que pertenece la sesión.
+          - name: category_legacy_id
+            description: ID numérico heredado de la categoría.
+          - name: category_name
+            description: Nombre de la categoría.
+          - name: event_id
+            description: UUID del Gran Premio al que pertenece esta sesión.
+          - name: event_name
+            description: Nombre del Gran Premio.
+          - name: event_sponsored_name
+            description: Nombre comercial del Gran Premio con patrocinador.
+          - name: year
+            description: Año de la temporada.
+          - name: circuit_id
+            description: UUID del circuito.
+          - name: circuit_legacy_id
+            description: ID numérico heredado del circuito.
+          - name: circuit_place
+            description: Ciudad donde se ubica el circuito.
+          - name: circuit_nation
+            description: Código de nación del circuito.
+          - name: country_iso
+            description: Código ISO del país del evento.
+          - name: country_name
+            description: Nombre del país del evento.
+          - name: country_region_iso
+            description: Código ISO de la región del país.
+          - name: event_short_name
+            description: Abreviación del Gran Premio.
+          - name: status
+            description: >
+              Estado de la sesión. Valores observados en los datos:
+              Official (resultado oficial), Provisional (pendiente de confirmación),
+              Unofficial (sprints históricos pre-2023 sin ratificación formal),
+              NORACE (evento sin carrera disputada).
+              Relevante para filtrar sesiones no oficiales o no disputadas.
+          - name: is_sprint
+            description: "TRUE si la sesión es una carrera sprint."
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _event_id
+            description: UUID del evento, replicado como columna de auditoría/partición.
+          - name: _category_id
+            description: UUID de la categoría, replicado como columna de auditoría/partición.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+
+      # ─────────────────────────────────────────────
+      # RESULTS
+      # ─────────────────────────────────────────────
+      - name: results
+        description: >
+          Resultados por piloto por sesión. Es la tabla de hechos más granular del proyecto:
+          una fila por piloto por sesión. Incluye posición final, puntos, tiempos, velocidades,
+          datos del piloto, equipo y constructor, así como condiciones de pista y metadata
+          del evento. Cubre tanto carreras (RAC) como clasificaciones (Q1, Q2),
+          prácticas libres (FP) y sprints (SPR).
+        columns:
+          - name: result_id
+            description: UUID del resultado individual en la API de MotoGP.
+          - name: position
+            description: Posición final del piloto en la sesión. NULL si no clasificó o fue retirado.
+          - name: rider_id
+            description: UUID del piloto en la API de MotoGP.
+          - name: rider_full_name
+            description: Nombre completo del piloto (nombre + apellido).
+          - name: rider_country_iso
+            description: Código ISO del país de origen del piloto.
+          - name: rider_country_name
+            description: País de origen del piloto.
+          - name: rider_region_iso
+            description: Código ISO de la región del país del piloto.
+          - name: rider_legacy_id
+            description: ID numérico heredado del piloto para compatibilidad histórica.
+          - name: rider_number
+            description: Número de dorsal del piloto.
+          - name: riders_api_uuid
+            description: UUID alternativo del piloto en el sistema TOAD de la API.
+          - name: team_id
+            description: UUID del equipo en la API de MotoGP.
+          - name: team_name
+            description: Nombre oficial del equipo.
+          - name: team_legacy_id
+            description: ID numérico heredado del equipo.
+          - name: team_season_id
+            description: UUID de la inscripción del equipo en la temporada.
+          - name: team_season_year
+            description: Año de la temporada del equipo.
+          - name: team_season_current
+            description: Indicador de si el equipo estaba activo en la temporada en curso.
+          - name: constructor_id
+            description: UUID del constructor (fabricante de la moto).
+          - name: constructor_name
+            description: Nombre del constructor (e.g. Honda, Yamaha, Ducati, KTM, Aprilia, Suzuki).
+          - name: constructor_legacy_id
+            description: ID numérico heredado del constructor.
+          - name: average_speed
+            description: Velocidad media del piloto durante la sesión (km/h).
+          - name: gap_first
+            description: >
+              Diferencia de tiempo respecto al primer clasificado, en segundos (float).
+              0.0 para el ganador. La diferencia en número de vueltas se almacena
+              en gap_lap (no en este campo). Almacenado como VARCHAR en raw por
+              consistencia con el CSV de origen.
+          - name: gap_prev
+            description: Diferencia de tiempo respecto al piloto inmediatamente anterior en la clasificación.
+          - name: gap_lap
+            description: Diferencia en número de vueltas respecto al líder (si aplica).
+          - name: total_laps
+            description: Número total de vueltas completadas por el piloto en la sesión.
+          - name: top_speed
+            description: Velocidad máxima registrada por el piloto en la sesión (km/h).
+          - name: time_text
+            description: >
+              Tiempo total de la sesión o tiempo de vuelta rápida en formato texto
+              (e.g. "45'23.456"). Puede contener valores especiales como "DNF" o "DSQ".
+          - name: points
+            description: Puntos de campeonato obtenidos. Aplica sólo a sesiones RAC y SPR.
+          - name: status
+            description: >
+              Estado final del piloto en la sesión. Valores reales en raw:
+              INSTND (classified/finished, el piloto fue clasificado),
+              OUTSTND (unclassified/retired, el piloto no terminó o no fue clasificado).
+              NOTA: las etiquetas DNF/DNS/DSQ son interpretaciones de negocio que
+              se derivan en la capa silver/gold, NO existen como valores en raw.
+          - name: best_lap_number
+            description: Número de vuelta en la que el piloto registró su mejor tiempo.
+          - name: best_lap_time
+            description: Mejor tiempo de vuelta registrado por el piloto (formato MM:SS.mmm).
+          - name: record_speed
+            description: Velocidad de récord del circuito al momento de la sesión (km/h).
+          - name: record_year
+            description: Año en que se estableció el récord de velocidad del circuito.
+          - name: is_new_record
+            description: "TRUE si el piloto estableció un nuevo récord en esta sesión."
+          - name: file
+            description: UUID del archivo de resultados (referencia a la tabla FILES).
+          - name: files
+            description: Lista de UUIDs de archivos relacionados con este resultado.
+          - name: session_id
+            description: UUID de la sesión a la que pertenece este resultado. FK → SESSIONS.ID.
+          - name: event_id
+            description: UUID del Gran Premio. FK → EVENTS.ID.
+          - name: year
+            description: Año de la temporada.
+          - name: md5
+            description: Hash MD5 del registro fuente para detección de cambios en re-ingestas.
+          - name: track_condition
+            description: Condición de la pista durante la sesión (Dry, Wet).
+          - name: air_condition
+            description: Condición del aire durante la sesión.
+          - name: humidity_condition
+            description: Humedad registrada durante la sesión.
+          - name: ground_condition
+            description: Condición del suelo/asfalto.
+          - name: weather_condition
+            description: Condición meteorológica general de la sesión.
+          - name: category_id
+            description: UUID de la categoría de competición. FK → CATEGORIES.ID.
+          - name: session_number
+            description: Número ordinal de la sesión dentro del evento.
+          - name: circuit_name
+            description: Nombre del circuito.
+          - name: session_type
+            description: >
+              Tipo de sesión desnormalizado desde sessions. Mismos valores que sessions.type:
+              FP, P, TTS, QP, Q, RAC, SPR, WUP, EP, PR.
+          - name: category_name
+            description: Nombre de la categoría (MotoGP, Moto2, Moto3…).
+          - name: event_name
+            description: Nombre del Gran Premio.
+          - name: event_sponsored_name
+            description: Nombre comercial del Gran Premio con patrocinador.
+          - name: event_season
+            description: Año de la temporada del evento.
+          - name: circuit_id
+            description: UUID del circuito.
+          - name: circuit_legacy_id
+            description: ID numérico heredado del circuito.
+          - name: circuit_place
+            description: Ciudad donde se ubica el circuito.
+          - name: circuit_nation
+            description: Código de nación del circuito.
+          - name: circuit_country_iso
+            description: Código ISO del país del circuito.
+          - name: circuit_country_name
+            description: País del circuito.
+          - name: circuit_country_region_iso
+            description: Código ISO de la región del país del circuito.
+          - name: event_short_name
+            description: Abreviación del Gran Premio.
+          - name: team_color
+            description: Color primario del equipo en formato hexadecimal (para visualizaciones).
+          - name: text_color
+            description: Color del texto del equipo en formato hexadecimal (para visualizaciones).
+          - name: picture_url
+            description: URL de la foto oficial del piloto.
+          - name: sponsored_team
+            description: Nombre comercial del equipo con patrocinador.
+          - name: rider_team_id
+            description: UUID de la relación piloto-equipo en la temporada.
+          - name: rider_name
+            description: Nombre de pila del piloto.
+          - name: rider_surname
+            description: Apellido del piloto.
+          - name: rider_nickname
+            description: Apodo del piloto (e.g. "The Doctor" para Rossi).
+          - name: current_career_step_season
+            description: Año del paso de carrera actual del piloto al momento de la ingesta.
+          - name: rider_in_grid
+            description: "TRUE si el piloto forma parte de la parrilla oficial de la temporada."
+          - name: profile_picture_url
+            description: URL de la imagen de perfil oficial del piloto.
+          - name: bike_picture_url
+            description: URL de la imagen oficial de la moto del piloto.
+          - name: helmet_picture_url
+            description: URL de la imagen del casco del piloto.
+          - name: number_picture_url
+            description: URL de la imagen con el número de dorsal del piloto.
+          - name: portrait_picture_url
+            description: URL del retrato oficial del piloto.
+          - name: rider_type
+            description: >
+              Clasificación del piloto dentro del campeonato.
+              Valores comunes: OFFICIAL (titular), WILDCARD (invitado puntual),
+              REPLACEMENT (sustituto).
+          - name: country_flag_url
+            description: URL de la imagen de la bandera del país del piloto.
+          - name: birth_city
+            description: Ciudad de nacimiento del piloto.
+          - name: birth_date
+            description: Fecha de nacimiento del piloto.
+          - name: years_old
+            description: Edad del piloto en el momento de la ingesta.
+          - name: published
+            description: "TRUE si el resultado está publicado y es visible en la API pública."
+          - name: tr_year
+            description: Año de referencia interna del registro (campo `tr.year` del CSV fuente).
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _event_id
+            description: UUID del evento, replicado como columna de auditoría/partición.
+          - name: _session_id
+            description: UUID de la sesión, replicado como columna de auditoría/partición.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # STANDINGS
+      # ─────────────────────────────────────────────
+      - name: standings
+        description: >
+          Clasificación del campeonato mundial por categoría y año.
+          Una fila por piloto por temporada (acumulado al final de la temporada
+          o al momento de la ingesta si la temporada está en curso).
+          Refleja el campeonato de pilotos, no el de constructores.
+        columns:
+          - name: md5
+            description: Hash MD5 del registro fuente para detección de cambios.
+          - name: classification_id
+            description: UUID de la entrada de clasificación en la API de MotoGP.
+          - name: constructor_name
+            description: Constructor (fabricante) con el que el piloto compite en esta temporada.
+          - name: rider_country_iso
+            description: Código ISO del país de origen del piloto.
+          - name: rider_full_name
+            description: Nombre completo del piloto.
+          - name: year
+            description: Año de la temporada del campeonato.
+          - name: points
+            description: Puntos totales acumulados por el piloto en la temporada.
+          - name: position
+            description: Posición en el campeonato mundial al momento de la ingesta.
+          - name: team_color
+            description: Color primario del equipo en formato hexadecimal.
+          - name: text_color
+            description: Color del texto del equipo en formato hexadecimal.
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _category_id
+            description: UUID de la categoría, replicado como columna de auditoría/partición.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
+
+      # ─────────────────────────────────────────────
+      # FILES
+      # ─────────────────────────────────────────────
+      - name: files
+        description: >
+          Archivos de resultados disponibles por evento y categoría en la API de MotoGP.
+          Actúa como un índice de navegación: cada fila representa un recurso (sesión,
+          clasificación, análisis) que puede ser consultado. Es la fuente que el proceso
+          de ingesta usa para descubrir qué archivos de resultados descargar.
+          No disponible en el dataset 2024_2026 (sustituido por llamadas directas a la API).
+        columns:
+          - name: id
+            description: UUID del archivo/recurso en la API de MotoGP.
+          - name: event_category_files_entry_url
+            description: URL del endpoint de la API que expone este archivo.
+          - name: event_category_files_entry_menu_position
+            description: Posición en el menú de navegación de la API.
+          - name: name
+            description: Nombre descriptivo del recurso (e.g. "Classification", "Grid", "Analysis").
+          - name: event_id
+            description: UUID del Gran Premio al que pertenece este archivo. FK → EVENTS.ID.
+          - name: category_id
+            description: UUID de la categoría a la que pertenece este archivo. FK → CATEGORIES.ID.
+          - name: year
+            description: Año de la temporada.
+          - name: md5
+            description: Hash MD5 del registro fuente.
+          - name: _year
+            description: Año de partición del archivo fuente.
+          - name: _event_id
+            description: UUID del evento, replicado como columna de auditoría/partición.
+          - name: _category_id
+            description: UUID de la categoría, replicado como columna de auditoría/partición.
+          - name: _source_file
+            description: Ruta o nombre del archivo CSV de origen.
+          - name: _source_dataset
+            description: Nombre del dataset de origen.
+          - name: _ingested_at
+            description: Timestamp UTC de ingesta en Snowflake.
