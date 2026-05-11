@@ -9,6 +9,7 @@ with
         from source
                 -- puesto que un mismo id aparece en múltiples años (multi-dataset ingestion),
                 -- se particiona por id y nos quedamos con el registro más reciente
+                -- estaba metiendo los id de las categorias en cada season(año)
         qualify row_number() over (
                 partition by id
                 order by _ingested_at desc
