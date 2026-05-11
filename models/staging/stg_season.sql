@@ -1,5 +1,7 @@
 with
-    source as (select * from {{ source("raw", "seasons") }}),
+    source as (
+        select * from {{ source('raw', 'seasons') }}
+        ),
 
     renamed as (
         select
