@@ -57,4 +57,66 @@ models:
           - accepted_values:
               values: ['Premier', 'Intermediate', 'Junior', 'Historical']
 
-      
+  - name: stg_event
+    description: >
+      Grandes Premios disputados por año. Una fila por evento.
+      Contiene información del circuito, país, fechas y nombre oficial.
+    columns:
+      - name: event_id
+        data_type: varchar
+        description: UUID del evento en la API de MotoGP.
+        tests:
+          - unique
+          - not_null
+
+      - name: circuit_id
+        data_type: varchar
+        description: UUID del circuito donde se disputa el evento.
+        tests:
+          - not_null
+
+      - name: season_id
+        data_type: varchar
+        description: UUID de la temporada a la que pertenece el evento. FK → stg_season.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_season')
+              field: season_id
+
+      - name: country_iso
+        data_type: varchar
+        description: Código ISO 3166-1 alpha-3 del país anfitrión.
+        tests:
+          - not_null
+
+      - name: short_name
+        data_type: varchar
+        description: Abreviación del Gran Premio (e.g. "QAT", "SPA", "ITA").
+        tests:
+          - not_null
+          
+      - name: sponsored_name
+        data_type: varchar
+        description: Nombre oficial del Gran Premio (e.g. "Gran Premio de España").
+        tests:          
+          - not_null
+
+      - name: year
+        data_type: number
+        description: Año de la temporada. Clave natural para joins.
+        tests:
+          - not_null
+        
+      - name: date_start
+        data_type: date
+        description: Fecha de inicio del fin de semana de carreras.
+        tests:
+          - not_null
+          
+      - name: date_end
+        data_type: date
+        description: Fecha de fin del fin de semana de carreras.
+        tests:
+          - not_null
+          
