@@ -50,3 +50,11 @@ models:
       +materialized: table
       +schema: GOLD
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_GOLD_DB"
+
+seeds:
+
+  MotoGP:
+  
+    session_type:
+      +schema: SILVER
+      +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
