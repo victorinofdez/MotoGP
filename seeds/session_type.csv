@@ -1,0 +1,11 @@
+type,type_label,is_race,is_qualifying,is_practice,is_warmup
+FP,Free Practice,false,false,true,false
+P,Combined Practice,false,false,true,false
+TTS,Test/Time Trial,false,false,true,false
+QP,Qualifying Practice,false,true,false,false
+Q,Qualifying,false,true,false,false
+RAC,Race,true,false,false,false
+SPR,Sprint,true,false,false,false
+WUP,Warm Up,false,false,false,true
+EP,Extra Practice,false,false,true,false
+PR,Practice Race,true,false,false,false
