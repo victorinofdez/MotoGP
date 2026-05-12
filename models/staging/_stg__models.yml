@@ -119,4 +119,469 @@ models:
         description: Fecha de fin del fin de semana de carreras.
         tests:
           - not_null
+
+  - name: stg_circuit
+    description: >
+      Dimensión de circuitos en staging. Contiene una fila por circuito con la
+      información principal usada en eventos, sesiones y resultados.
+
+    columns:
+      - name: circuit_id
+        data_type: varchar
+        description: >
+          UUID único del circuito en la API de MotoGP. Clave principal para joins.
+        tests:
+          - not_null
+          - unique
           
+      - name: circuit_legacy_id
+        data_type: number
+        description: >
+          ID numérico heredado del circuito para compatibilidad con datos históricos.
+        tests:
+          - not_null
+          
+      - name: circuit_name
+        data_type: varchar
+        description: >
+          Nombre oficial del circuito donde se disputan los Grandes Premios.
+        tests:
+          - not_null
+          
+      - name: circuit_nation
+        data_type: varchar
+        description: >
+          Código de nación del país donde se ubica el circuito.
+        tests:
+          - not_null
+          
+      - name: circuit_place
+        data_type: varchar
+        description: >
+          Ciudad o localidad donde se encuentra el circuito.
+        tests:
+          - not_null
+
+  - name: stg_session
+    description: "Modelo de staging que estandariza la información de las sesiones de carrera, incluyendo metadatos del evento, circuito, condiciones climáticas y estado de la sesión."
+
+    columns:
+      - name: session_id
+        data_type: varchar
+        description: "Identificador único de la sesión."
+        tests:
+          - not_null
+          - unique
+
+      - name: event_id
+        data_type: varchar
+        description: "Identificador del evento al que pertenece la sesión."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_event')
+              field: event_id
+
+      - name: category_id
+        data_type: varchar
+        description: "Identificador de la categoría de competición asociada a la sesión (por ejemplo, MotoGP, Moto2, Moto3)."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_category')
+              field: category_id
+
+      - name: circuit_id
+        data_type: varchar
+        description: "Identificador del circuito donde se disputa la sesión."
+        tests:
+          - not_null
+
+      - name: year
+        data_type: number
+        description: "Año en el que se celebra la sesión."
+        tests:
+          - not_null
+
+      - name: type
+        data_type: varchar
+        description: "Tipo de sesión (por ejemplo, Practice, Qualifying, Race, Sprint)."
+        tests:
+          - not_null
+
+      - name: status
+        data_type: varchar
+        description: "Estado actual o final de la sesión (por ejemplo, Finished, Cancelled, Scheduled)."
+
+      - name: is_sprint
+        data_type: boolean
+        description: "Indica si la sesión corresponde a una Sprint Race."
+        tests:
+          - not_null
+
+      - name: session_date
+        data_type: timestamp_ntz
+        description: "Fecha y hora en la que se celebra la sesión."
+        tests:
+          - not_null
+
+      - name: track_condition
+        data_type: varchar
+        description: "Condición general de la pista durante la sesión (por ejemplo, Dry, Wet, Damp)."
+
+      - name: air_condition
+        data_type: float
+        description: "Temperatura ambiente registrada durante la sesión, expresada en grados Celsius."
+
+      - name: humidity_condition
+        data_type: float
+        description: "Nivel de humedad relativa registrado durante la sesión, expresado en porcentaje."
+
+      - name: ground_condition
+        data_type: float
+        description: "Temperatura del suelo o del asfalto registrada durante la sesión, expresada en grados Celsius."
+
+      - name: weather_condition
+        data_type: varchar
+        description: "Descripción general de las condiciones meteorológicas durante la sesión (por ejemplo, Sunny, Cloudy, Rainy)."
+
+  - name: stg_rider
+    description: "Modelo de staging que consolida la información de los pilotos, incluyendo datos personales, nacionalidad, identificadores históricos y recursos visuales."
+
+    columns:
+      - name: rider_id
+        data_type: varchar
+        description: "Identificador único del piloto."
+        tests:
+          - not_null
+          - unique
+
+      - name: rider_name
+        data_type: varchar
+        description: "Nombre del piloto."
+
+      - name: rider_surname
+        data_type: varchar
+        description: "Apellido del piloto."
+
+      - name: rider_full_name
+        data_type: varchar
+        description: "Nombre completo del piloto."
+        tests:
+          - not_null
+
+      - name: rider_nickname
+        data_type: varchar
+        description: "Apodo o nombre deportivo del piloto."
+
+      - name: rider_country_iso
+        data_type: varchar
+        description: "Código ISO del país de nacionalidad del piloto."
+
+      - name: rider_country_name
+        data_type: varchar
+        description: "Nombre del país de nacionalidad del piloto."
+
+      - name: rider_legacy_id
+        data_type: varchar
+        description: "Identificador histórico o legado utilizado en sistemas anteriores para el piloto."
+        tests:
+          - not_null
+
+      - name: birth_city
+        data_type: varchar
+        description: "Ciudad de nacimiento del piloto."
+
+      - name: birth_date
+        data_type: date
+        description: "Fecha de nacimiento del piloto."
+
+      - name: profile_picture_url
+        data_type: varchar
+        description: "URL de la imagen de perfil del piloto."
+
+      - name: portrait_picture_url
+        data_type: varchar
+        description: "URL de la imagen de retrato oficial del piloto."
+
+  - name: stg_team
+    description: "Modelo de staging que consolida la información de los equipos participantes en la competición, incluyendo identificadores actuales e históricos."
+
+    columns:
+      - name: team_id
+        data_type: varchar
+        description: "Identificador único del equipo."
+        tests:
+          - not_null
+          - unique
+
+      - name: team_name
+        data_type: varchar
+        description: "Nombre oficial del equipo."
+        tests:
+          - not_null
+
+      - name: team_legacy_id
+        data_type: varchar
+        description: "Identificador histórico o legado utilizado en sistemas anteriores para el equipo."
+        tests:
+          - not_null
+
+  - name: stg_constructor
+    description: "Modelo de staging que consolida la información de los constructores participantes en la competición, incluyendo identificadores actuales e históricos."
+
+    columns:
+      - name: constructor_id
+        data_type: varchar
+        description: "Identificador único del constructor."
+        tests:
+          - not_null
+          - unique
+
+      - name: constructor_name
+        data_type: varchar
+        description: "Nombre oficial del constructor."
+        tests:
+          - not_null
+
+      - name: constructor_legacy_id
+        data_type: varchar
+        description: "Identificador histórico o legado utilizado en sistemas anteriores para el constructor."
+        tests:
+          - not_null
+
+  - name: stg_rider_team_season
+    description: "Modelo de staging que consolida la relación entre pilotos y equipos por temporada y categoría, incluyendo su situación dentro de la parrilla y evolución profesional."
+
+    columns:
+      - name: rider_team_id
+        data_type: varchar
+        description: "Identificador único de la relación entre piloto y equipo."
+        tests:
+          - not_null
+          - unique
+
+      - name: rider_id
+        data_type: varchar
+        description: "Identificador del piloto asociado al equipo."
+        tests:
+          - not_null
+
+      - name: team_id
+        data_type: varchar
+        description: "Identificador del equipo asociado al piloto."
+
+      - name: season_year
+        data_type: integer
+        description: "Año de la temporada en la que el piloto forma parte del equipo."
+        tests:
+          - not_null
+
+      - name: category_id
+        data_type: varchar
+        description: "Identificador de la categoría de competición en la que participa el piloto con ese equipo."
+        tests:
+          - not_null
+
+      - name: current_career_step_season
+        data_type: varchar
+        description: "Indica la etapa profesional del piloto durante esa temporada dentro de su carrera deportiva."
+
+      - name: rider_in_grid
+        data_type: boolean
+        description: "Indica si el piloto forma parte activa de la parrilla en esa temporada."
+
+      - name: bike_picture_url
+        data_type: varchar
+        description: "URL de la imagen oficial de la moto asociada al piloto y equipo durante esa temporada."
+
+      - name: helmet_picture_url
+        data_type: varchar
+        description: "URL de la imagen oficial del casco del piloto durante esa temporada."  
+
+      - name: number_picture_url
+        data_type: varchar
+        description: "URL de la imagen oficial del dorsal del piloto durante esa temporada."     
+
+  - name: stg_result
+    description: "Modelo de staging que consolida los resultados de cada piloto por sesión, incluyendo posiciones, tiempos, gaps, rendimiento y metadatos de carrera."
+
+    columns:
+      - name: result_id
+        data_type: varchar
+        description: "Identificador único del resultado."
+        tests:
+          - not_null
+          - unique
+
+      - name: position
+        data_type: integer
+        description: "Posición final del piloto en la sesión o carrera."
+
+      - name: rider_id
+        data_type: varchar
+        description: "Identificador del piloto."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_rider')
+              field: rider_id
+
+      - name: team_id
+        data_type: varchar
+        description: "Identificador del equipo asociado al resultado."
+        tests:
+          - relationships:
+              to: ref('stg_team')
+              field: team_id
+
+      - name: constructor_id
+        data_type: varchar
+        description: "Identificador del constructor asociado al resultado."
+        tests:
+          - relationships:
+              to: ref('stg_constructor')
+              field: constructor_id
+
+      - name: rider_team_id
+        data_type: varchar
+        description: "Identificador de la relación piloto-equipo en la temporada."
+        tests:
+          - relationships:
+              to: ref('stg_rider_team_season')
+              field: rider_team_id
+
+      - name: session_id
+        data_type: varchar
+        description: "Identificador de la sesión en la que se registra el resultado."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_session')
+              field: session_id
+
+      - name: event_id
+        data_type: varchar
+        description: "Identificador del evento asociado al resultado."
+        tests:
+          - relationships:
+              to: ref('stg_event')
+              field: event_id
+
+      - name: category_id
+        data_type: varchar
+        description: "Identificador de la categoría de competición."
+        tests:
+          - relationships:
+              to: ref('stg_category')
+              field: category_id
+
+      - name: circuit_id
+        data_type: varchar
+        description: "Identificador del circuito donde se disputa la sesión."
+        tests:
+          - relationships:
+              to: ref('stg_circuit')
+              field: circuit_id
+
+      - name: year
+        data_type: number
+        description: "Año de la temporada del resultado."
+        tests:
+          - not_null
+
+      - name: average_speed
+        data_type: float
+        description: "Velocidad media del piloto durante la sesión."
+
+      - name: gap_first
+        data_type: float
+        description: "Diferencia de tiempo respecto al primer clasificado."
+
+      - name: gap_prev
+        data_type: float
+        description: "Diferencia de tiempo respecto al piloto anterior."
+
+      - name: gap_lap
+        data_type: float
+        description: "Diferencia de tiempo por vuelta respecto a referencia."
+
+      - name: total_laps
+        data_type: integer
+        description: "Número total de vueltas completadas por el piloto."
+
+      - name: top_speed
+        data_type: float
+        description: "Velocidad máxima alcanzada durante la sesión."
+
+      - name: time_text
+        data_type: varchar
+        description: "Tiempo final del piloto en formato texto."
+
+      - name: points
+        data_type: integer
+        description: "Puntos obtenidos por el piloto en la sesión."
+
+      - name: status
+        data_type: varchar
+        description: "Estado final del resultado (por ejemplo INSTND o OUTSTND)."
+
+      - name: best_lap_number
+        data_type: integer
+        description: "Número de la mejor vuelta del piloto."
+
+      - name: best_lap_time
+        data_type: varchar
+        description: "Tiempo de la mejor vuelta del piloto."
+
+      - name: file_url
+        data_type: varchar
+        description: "URL del PDF oficial de resultados de la sesión en resources.motogp.com."
+
+  - name: stg_standing
+    description: "Modelo de staging que consolida la clasificación general (standings) de pilotos por temporada y categoría, incluyendo posición, puntos y datos básicos del piloto y constructor."
+
+    columns:
+      - name: standing_id
+        data_type: varchar
+        description: "Identificador único del registro de clasificación."
+        tests:
+          - not_null
+          - unique
+
+      - name: rider_full_name
+        data_type: varchar
+        description: "Nombre completo del piloto."
+        tests:
+          - not_null
+
+      - name: rider_country_iso
+        data_type: varchar
+        description: "Código ISO del país del piloto."
+
+      - name: constructor_name
+        data_type: varchar
+        description: "Nombre del constructor asociado al piloto en la clasificación."
+
+      - name: year
+        data_type: number
+        description: "Año de la temporada de la clasificación."
+        tests:
+          - not_null
+
+      - name: points
+        data_type: number
+        description: "Puntos acumulados por el piloto en la temporada."
+
+      - name: position
+        data_type: number
+        description: "Posición del piloto en la clasificación general de la temporada."
+
+      - name: category_id
+        data_type: varchar
+        description: "Identificador de la categoría de competición (por ejemplo MotoGP, Moto2, Moto3)."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_category')
+              field: category_id
