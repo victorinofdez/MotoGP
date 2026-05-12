@@ -1,0 +1,48 @@
+version: 2
+
+seeds:
+  - name: session_type
+    description: >
+      Tabla de referencia que clasifica cada tipo de sesión de MotoGP con una
+      etiqueta legible y banderas booleanas para facilitar el filtrado en los
+      modelos de la capa Gold.
+
+    columns:
+      - name: type
+        description: Código bruto del tipo de sesión proveniente de la API (por ejemplo, RAC, FP, SPR).
+        tests:
+          - unique
+          - not_null
+
+      - name: type_label
+        description: Etiqueta descriptiva y legible del tipo de sesión.
+        tests:
+          - not_null
+
+      - name: is_race
+        description: Indica si la sesión corresponde a una carrera (carrera principal o sprint).
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+      - name: is_qualifying
+        description: Indica si la sesión sirve para definir la posición de salida en parrilla.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+      - name: is_practice
+        description: Indica si la sesión corresponde a entrenamientos libres o cronometrados.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+      - name: is_warmup
+        description: Indica si la sesión corresponde a un warm-up previo a la carrera.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
