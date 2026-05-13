@@ -17,24 +17,6 @@ models:
       - name: constructor_legacy_id
         description: ID legacy del constructor
 
-  - name: dim_category
-    description: >
-      Dimensión de categorías. Grain: un registro por categoría.
-    columns:
-      - name: category_id
-        description: PK de la categoría
-        tests:
-          - not_null
-          - unique
-      - name: category_name
-        description: Nombre de la categoría
-        tests:
-          - not_null
-      - name: category_legacy_id
-        description: ID legacy de la categoría
-      - name: class_tier
-        description: Nivel de la categoría (Premier, Intermediate, Junior, Historical)
-
   - name: fct_constructor_season
     description: >
       Fact table con el rendimiento agregado de cada constructor por categoría y temporada.

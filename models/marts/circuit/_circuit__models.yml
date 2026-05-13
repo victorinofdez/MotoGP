@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: fct_rider_circuit
+    description: >
+      Fact table con el rendimiento histórico agregado de cada piloto por circuito
+      y categoría. Era moderna (2002-2026).
+      Grain: un registro por piloto + circuito + categoría.
+      Solo incluye sesiones de carrera (RAC, SPR).
+      Permite responder quién es el rey histórico de cada circuito.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - rider_id
+            - circuit_id
+            - category_id
+    columns:
+      - name: rider_id
+        description: FK a dim_rider
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_rider')
+              field: rider_id
+      - name: circuit_id
+        description: FK a dim_circuit
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_circuit')
+              field: circuit_id
+      - name: category_id
+        description: FK a dim_category
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_category')
+              field: category_id
+      - name: total_entries
+        description: Total de carreras disputadas en ese circuito
+      - name: total_points
+        description: Suma de puntos del piloto en ese circuito
+      - name: avg_position
+        description: Posición media del piloto en ese circuito
+      - name: victories
+        description: Número de victorias en ese circuito
+      - name: podiums
+        description: Número de podios en ese circuito
+      - name: points_finishes
+        description: Número de finales dentro de los puntos en ese circuito
+      - name: dnf_count
+        description: Número de abandonos en ese circuito
+      - name: dnf_rate_pct
+        description: Porcentaje de abandonos en ese circuito
+      - name: avg_top_speed
+        description: Velocidad punta media en ese circuito
+      - name: max_top_speed
+        description: Velocidad punta máxima registrada en ese circuito
