@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: dim_constructor
+    description: >
+      Dimensión de constructores. Grain: un registro por constructor.
+    columns:
+      - name: constructor_id
+        description: PK del constructor
+        tests:
+          - not_null
+          - unique
+      - name: constructor_name
+        description: Nombre del constructor
+        tests:
+          - not_null
+      - name: constructor_legacy_id
+        description: ID legacy del constructor
+
+  - name: dim_category
+    description: >
+      Dimensión de categorías. Grain: un registro por categoría.
+    columns:
+      - name: category_id
+        description: PK de la categoría
+        tests:
+          - not_null
+          - unique
+      - name: category_name
+        description: Nombre de la categoría
+        tests:
+          - not_null
+      - name: category_legacy_id
+        description: ID legacy de la categoría
+      - name: class_tier
+        description: Nivel de la categoría (Premier, Intermediate, Junior, Historical)
+
+  - name: fct_constructor_season
+    description: >
+      Fact table con el rendimiento agregado de cada constructor por categoría y temporada.
+      Grain: un registro por constructor + categoría + año.
+      Solo incluye sesiones de carrera (RAC, SPR). Excluye registros sin constructor_id.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - constructor_id
+            - category_id
+            - year
+    columns:
+      - name: constructor_id
+        description: FK a dim_constructor
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_constructor')
+              field: constructor_id
+      - name: category_id
+        description: FK a dim_category
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_category')
+              field: category_id
+      - name: year
+        description: Temporada
+        tests:
+          - not_null
+      - name: total_entries
+        description: Total de entradas en carrera (piloto x sesión)
+      - name: total_riders
+        description: Número de pilotos distintos del constructor ese año
+      - name: total_points
+        description: Suma de puntos de todos los pilotos del constructor
+      - name: victories
+        description: Número de victorias (position = 1)
+      - name: podiums
+        description: Número de podios (position <= 3)
+      - name: points_finishes
+        description: Número de finales dentro de los puntos (position <= 10)
+      - name: dnf_count
+        description: Número de abandonos (status_category = DNF)
+      - name: dnf_rate_pct
+        description: Porcentaje de abandonos sobre el total de entradas
+      - name: avg_top_speed
+        description: Velocidad punta media del constructor ese año
+      - name: max_top_speed
+        description: Velocidad punta máxima registrada ese año
