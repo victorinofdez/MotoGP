@@ -46,6 +46,11 @@ models:
       +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
 
+    intermediate:
+      +materialized: view
+      +schema: SILVER
+      +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
+      
     marts:
       +materialized: table
       +schema: GOLD

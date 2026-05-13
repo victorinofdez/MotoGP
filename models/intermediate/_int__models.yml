@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: int_race_results
+    description: >
+      Join entre stg_result y stg_session. Consolida resultado de carrera
+      con contexto de sesión y condiciones meteorológicas.
+    columns:
+      - name: result_id
+        description: PK heredada de stg_result
+        tests:
+          - not_null
+          - unique
