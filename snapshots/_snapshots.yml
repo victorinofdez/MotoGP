@@ -1,0 +1,25 @@
+version: 2
+
+snapshots:
+  - name: snap_rider_team
+    description: >
+      SCD2 sobre stg_rider_team_season. Rastrea cambios de equipo, categoría
+      y presencia en parrilla de cada piloto a lo largo del tiempo.
+    columns:
+      - name: rider_team_id
+        description: PK natural del registro
+        tests:
+          - not_null
+      - name: dbt_scd_id
+        description: PK surrogate generada por dbt para cada versión del registro
+        tests:
+          - not_null
+          - unique
+      - name: dbt_valid_from
+        description: Fecha desde la que este estado es válido
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: Fecha hasta la que este estado es válido. NULL si es el registro activo
+      - name: dbt_is_current_record
+        description: True si es el estado actual del piloto

@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: dim_rider
+    description: >
+      Dimensión de pilotos. Contiene atributos personales estáticos.
+      Grain: un registro por piloto.
+    columns:
+      - name: rider_id
+        description: PK del piloto
+        tests:
+          - not_null
+          - unique
+      - name: rider_full_name
+        description: Nombre completo del piloto
+        tests:
+          - not_null
+      - name: rider_country_iso
+        description: Código ISO del país del piloto
+      - name: birth_date
+        description: Fecha de nacimiento del piloto
+      - name: rider_legacy_id
+        description: ID legacy del piloto
+      - name: profile_picture_url
+        description: Url a la fotografía del perfil del piloto.
+      - name: portrait_picture_url
+        description: Url al retrato del piloto.
+    
+  - name: dim_category
+    description: >
+      Dimensión de categorías. Grain: un registro por categoría.
+    columns:
+      - name: category_id
+        description: PK de la categoría
+        tests:
+          - not_null
+          - unique
+      - name: category_name
+        description: Nombre de la categoría
+        tests:
+          - not_null
+      - name: category_legacy_id
+        description: ID legacy de la categoría
+      - name: class_tier
+        description: Nivel de la categoría (Premier, Intermediate, Junior, Historical)
+
+  - name: dim_circuit
+    description: >
+      Dimensión de circuitos. Contiene atributos estáticos del trazado.
+      Grain: un registro por circuito.
+    columns:
+      - name: circuit_id
+        description: PK del circuito
+        tests:
+          - not_null
+          - unique
+      - name: circuit_name
+        description: Nombre del circuito
+        tests:
+          - not_null
+      - name: circuit_nation
+        description: País donde se ubica el circuito
+      - name: circuit_place
+        description: Ciudad o lugar donde se ubica el circuito
+      - name: circuit_legacy_id
+        description: ID legacy del circuito

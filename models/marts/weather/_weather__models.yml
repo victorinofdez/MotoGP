@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: fct_rider_weather
+    description: >
+      Fact table con el rendimiento de cada piloto por condición de pista,
+      circuito, categoría y temporada. Era moderna (2002-2026).
+      Grain: un registro por piloto + categoría + circuito + año + condición de pista.
+      Solo incluye sesiones de carrera (RAC, SPR) con condición de pista registrada.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - rider_id
+            - category_id
+            - circuit_id
+            - year
+            - condition_category
+    columns:
+      - name: rider_id
+        description: FK a dim_rider
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_rider')
+              field: rider_id
+      - name: category_id
+        description: FK a dim_category
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_category')
+              field: category_id
+      - name: circuit_id
+        description: FK a dim_circuit
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_circuit')
+              field: circuit_id
+      - name: year
+        description: Temporada
+        tests:
+          - not_null
+      - name: condition_category
+        description: Condición de pista normalizada (DRY, WET, MIXED)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DRY', 'WET', 'MIXED']
+      - name: total_entries
+        description: Total de entradas en carrera con esa condición
+      - name: total_points
+        description: Suma de puntos del piloto con esa condición
+      - name: avg_position
+        description: Posición media del piloto con esa condición
+      - name: victories
+        description: Número de victorias con esa condición
+      - name: podiums
+        description: Número de podios con esa condición
+      - name: points_finishes
+        description: Número de finales dentro de los puntos con esa condición
+      - name: dnf_count
+        description: Número de abandonos con esa condición
+      - name: dnf_rate_pct
+        description: Porcentaje de abandonos con esa condición
+      - name: avg_top_speed
+        description: Velocidad punta media con esa condición
