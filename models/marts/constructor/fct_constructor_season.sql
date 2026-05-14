@@ -20,24 +20,9 @@ aggregated as (
         category_id,
         year,
 
-        -- participaciones
-        count(*)                                                        as total_entries,
+        {{ race_metrics(include_avg_position=false) }},
+
         count(distinct rider_id)                                        as total_riders,
-
-        -- rendimiento
-        sum(points)                                                     as total_points,
-        count(case when position = 1 then 1 end)                        as victories,
-        count(case when position <= 3 then 1 end)                       as podiums,
-        count(case when position <= 10 then 1 end)                      as points_finishes,
-
-        -- tasas de abandono
-        count(case when status_category = 'DNF' then 1 end)             as dnf_count,
-        round(
-            count(case when status_category = 'DNF' then 1 end)::float
-            / nullif(count(*), 0) * 100, 2
-        )                                                               as dnf_rate_pct,
-
-        -- velocidad
         round(avg(top_speed), 2)                                        as avg_top_speed,
         max(top_speed)                                                  as max_top_speed
 
