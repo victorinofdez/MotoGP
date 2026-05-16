@@ -26,7 +26,7 @@ renamed as (
         category_id,
         circuit_id,
         year,
-        average_speed::float                                                        as average_speed,
+        average_speed::float    as average_speed,
         REPLACE(gap_first, ',', '')::float                                          as gap_first,
         REPLACE(gap_prev, ',', '')::float                                           as gap_prev,
         gap_lap::float                                                              as gap_lap,

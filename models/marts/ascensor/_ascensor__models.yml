@@ -70,20 +70,22 @@ models:
       Solo incluye sesiones de carrera (RAC, SPR).
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - rider_id
-            - team_id
-            - constructor_id
-            - category_id
-            - year
+          arguments: 
+            combination_of_columns:
+              - rider_id
+              - team_id
+              - constructor_id
+              - category_id
+              - year
     columns:
       - name: rider_id
         description: FK a dim_rider
         tests:
           - not_null
           - relationships:
-              to: ref('dim_rider')
-              field: rider_id
+              arguments: 
+                to: ref('dim_rider')
+                field: rider_id
       - name: team_id
         description: FK a dim_team. Excluidos registros sin team_id en el modelo.
       - name: category_id
@@ -91,8 +93,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dim_category')
-              field: category_id
+              arguments: 
+                to: ref('dim_category')
+                field: category_id
       - name: year
         description: Temporada
         tests:

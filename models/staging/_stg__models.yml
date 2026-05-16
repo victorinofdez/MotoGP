@@ -55,7 +55,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Premier', 'Intermediate', 'Junior', 'Historical']
+              arguments: 
+                values: ['Premier', 'Intermediate', 'Junior', 'Historical']
 
   - name: stg_event
     description: >
@@ -179,8 +180,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_event')
-              field: event_id
+              arguments:
+                to: ref('stg_event')
+                field: event_id
 
       - name: category_id
         data_type: varchar
@@ -188,8 +190,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_category')
-              field: category_id
+              arguments: 
+                to: ref('stg_category')
+                field: category_id
 
       - name: circuit_id
         data_type: varchar

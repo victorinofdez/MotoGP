@@ -9,34 +9,38 @@ models:
       Solo incluye sesiones de carrera (RAC, SPR) con condición de pista registrada.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - rider_id
-            - category_id
-            - circuit_id
-            - year
-            - condition_category
+          arguments: 
+            combination_of_columns:
+              - rider_id
+              - category_id
+              - circuit_id
+              - year
+              - condition_category
     columns:
       - name: rider_id
         description: FK a dim_rider
         tests:
           - not_null
           - relationships:
-              to: ref('dim_rider')
-              field: rider_id
+              arguments: 
+                to: ref('dim_rider')
+                field: rider_id
       - name: category_id
         description: FK a dim_category
         tests:
           - not_null
           - relationships:
-              to: ref('dim_category')
-              field: category_id
+              arguments: 
+                to: ref('dim_category')
+                field: category_id
       - name: circuit_id
         description: FK a dim_circuit
         tests:
           - not_null
           - relationships:
-              to: ref('dim_circuit')
-              field: circuit_id
+              arguments: 
+                to: ref('dim_circuit')
+                field: circuit_id
       - name: year
         description: Temporada
         tests:
@@ -46,7 +50,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['DRY', 'WET', 'MIXED']
+              arguments: 
+                values: ['DRY', 'WET', 'MIXED']
       - name: total_entries
         description: Total de entradas en carrera con esa condición
       - name: total_points

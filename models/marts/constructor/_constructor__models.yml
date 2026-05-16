@@ -24,25 +24,28 @@ models:
       Solo incluye sesiones de carrera (RAC, SPR). Excluye registros sin constructor_id.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - constructor_id
-            - category_id
-            - year
+          arguments: 
+            combination_of_columns:
+              - constructor_id
+              - category_id
+              - year
     columns:
       - name: constructor_id
         description: FK a dim_constructor
         tests:
           - not_null
           - relationships:
-              to: ref('dim_constructor')
-              field: constructor_id
+              arguments: 
+                to: ref('dim_constructor')
+                field: constructor_id
       - name: category_id
         description: FK a dim_category
         tests:
           - not_null
           - relationships:
-              to: ref('dim_category')
-              field: category_id
+              arguments: 
+                to: ref('dim_category')
+                field: category_id
       - name: year
         description: Temporada
         tests:
