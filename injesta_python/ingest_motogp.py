@@ -772,7 +772,6 @@ def main() -> int:
                 log.info("  TRUNCATE aplicado a %s", table)
 
             # 3. PUT al stage (el timestamp en el prefijo hace idempotentes las re-ejecuciones)
-            #    @DEV_MOTOGP_BRONZE_DB.RAW.MOTOGP_STAGE/results/20260514_123456/
             put_file_to_stage(conn, csv_path, stage_prefix,
                               args.database, args.schema)
 
