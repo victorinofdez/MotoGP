@@ -1,5 +1,9 @@
-# 🏍️ MotoGP Analytics — dbt + Snowflake + Python
-
+# MotoGP Analytics Python + Snowflake + dbt + Power Bi 
+</br>
+<p align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/Moto_Gp_logo.svg" alt="MotoGP Logo" width="900">
+</p>
+</br>
 > Pipeline de datos end-to-end sobre el Campeonato del Mundo de MotoGP (1949 – presente).
 > Ingesta desde API pública → Snowflake Bronze → Silver (dbt staging + intermediate) → Gold (dbt marts).
 
@@ -46,56 +50,56 @@ Los datos cubren **todas las categorías** (MotoGP/500cc, Moto2/250cc, Moto3/125
 ## Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          FUENTE DE DATOS                                    │
-│         API Micheleberardi  ·  api.micheleberardi.com/racing/v1.0           │
-│         Rate limit: 50 llamadas/min · 200/hora · 500/día                    │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │  POST requests (JWT)
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     INGESTA PYTHON  (injesta_python/)                       │
-│                                                                             │
-│   download_motogp.py          ingest_motogp.py                             │
-│   ─────────────────           ────────────────────────────────────         │
-│   API → CSV locales           CSV locales → Snowflake (PUT + COPY INTO)    │
-│   motogp_data_YYYY_YYYY/      Normalización · Coerción de tipos            │
-│                               Columnas de auditoría (_ingested_at, md5…)   │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│   BRONZE  ·  DEV_MOTOGP_BRONZE_DB.RAW                                      │
-│   ─────────────────────────────────────────────────────────────────────    │
-│   seasons · categories · events · sessions · results · standings           │
-│   calendar · files                                                          │
-│   Datos crudos, sin transformar. Columnas de auditoría prefijadas con _    │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │  dbt run (staging)
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│   SILVER  ·  DEV_MOTOGP_SILVER_DB.SILVER                                   │
-│   ─────────────────────────────────────────────────────────────────────    │
-│   stg_season · stg_category · stg_event · stg_session · stg_result        │
-│   stg_rider · stg_team · stg_constructor · stg_standing                   │
-│   stg_rider_team_season · stg_circuit                                      │
-│   ────────────────────────────────────────────────────────────────────     │
-│   int_race_results  (view — join results + sessions)                       │
-│   snap_rider_team   (SCD2 — histórico piloto–equipo)                       │
-└─────────────────────────┬───────────────────────────────────────────────────┘
-                          │  dbt run (marts)
-                          ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│   GOLD  ·  DEV_MOTOGP_GOLD_DB.GOLD                                         │
-│   ─────────────────────────────────────────────────────────────────────    │
-│   DIMENSIONES COMPARTIDAS          CASOS DE USO                            │
-│   dim_rider                        fct_rider_season   (ascensor)           │
-│   dim_category                     fct_rider_circuit  (circuit)            │
-│   dim_circuit                      fct_constructor_season (constructor)    │
-│                                    fct_rider_weather  (weather)            │
-│                                    dim_rider_team (SCD2)                   │
-│                                    dim_team · dim_constructor              │
-└─────────────────────────────────────────────────────────────────────────────┘
+                        ┌─────────────────────────────────────────────────────────────────────────────┐
+                        │                          FUENTE DE DATOS                                    │
+                        │         API Micheleberardi  ·  api.micheleberardi.com/racing/v1.0           │
+                        │         Rate limit: 50 llamadas/min · 200/hora · 500/día                    │
+                        └─────────────────────────┬───────────────────────────────────────────────────┘
+                                                  │  POST requests (JWT)
+                                                  ▼
+                        ┌─────────────────────────────────────────────────────────────────────────────┐
+                        │                     INGESTA PYTHON  (injesta_python/)                       │
+                        │                                                                             │
+                        │   download_motogp.py          ingest_motogp.py                              │
+                        │   ─────────────────           ────────────────────────────────────          │
+                        │   API → CSV locales           CSV locales → Snowflake (PUT + COPY INTO)     │
+                        │   motogp_data_YYYY_YYYY/      Normalización · Coerción de tipos             │
+                        │                               Columnas de auditoría (_ingested_at, md5…)    │
+                        └─────────────────────────┬───────────────────────────────────────────────────┘
+                                                  │
+                                                  ▼
+                        ┌─────────────────────────────────────────────────────────────────────────────┐
+                        │   BRONZE  ·  DEV_MOTOGP_BRONZE_DB.RAW                                       │
+                        │   ─────────────────────────────────────────────────────────────────────     │
+                        │   seasons · categories · events · sessions · results · standings            │
+                        │   calendar · files                                                          │
+                        │   Datos crudos, sin transformar. Columnas de auditoría prefijadas con _     │
+                        └─────────────────────────┬───────────────────────────────────────────────────┘
+                                                  │  dbt run (staging)
+                                                  ▼
+                        ┌─────────────────────────────────────────────────────────────────────────────┐
+                        │   SILVER  ·  DEV_MOTOGP_SILVER_DB.SILVER                                    │
+                        │   ─────────────────────────────────────────────────────────────────────     │
+                        │   stg_season · stg_category · stg_event · stg_session · stg_result          │
+                        │   stg_rider · stg_team · stg_constructor · stg_standing                     │
+                        │   stg_rider_team_season · stg_circuit                                       │
+                        │   ────────────────────────────────────────────────────────────────────      │
+                        │   int_race_results  (view — join results + sessions)                        │
+                        │   snap_rider_team   (SCD2 — histórico piloto–equipo)                        │
+                        └─────────────────────────┬───────────────────────────────────────────────────┘
+                                                  │  dbt run (marts)
+                                                  ▼
+                        ┌─────────────────────────────────────────────────────────────────────────────┐
+                        │   GOLD  ·  DEV_MOTOGP_GOLD_DB.GOLD                                          │
+                        │   ─────────────────────────────────────────────────────────────────────     │
+                        │   DIMENSIONES COMPARTIDAS          CASOS DE USO                             │
+                        │   dim_rider                        fct_rider_season   (ascensor)            │
+                        │   dim_category                     fct_rider_circuit  (circuit)             │
+                        │   dim_circuit                      fct_constructor_season (constructor)     │
+                        │                                    fct_rider_weather  (weather)             │
+                        │                                    dim_rider_team (SCD2)                    │
+                        │                                    dim_team · dim_constructor               │
+                        └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -743,6 +747,29 @@ MotoGP/
 ├── analyses/                  # Queries exploratorias ad-hoc
 └── tests/                     # Tests singulares personalizados
 ```
+---
+
+## Visialización final en Power Bi
+
+#Inicio
+
+<img width="2362" height="1368" alt="image" src="https://github.com/user-attachments/assets/c3c7606f-20b6-44f8-beff-330d00effcda" />
+
+#Guerra de Constructores
+
+<img width="2362" height="1368" alt="image" src="https://github.com/user-attachments/assets/32b0aeaa-1884-42f2-a898-abb9769f66d0" />
+
+#El Ascensor
+
+<img width="2362" height="1368" alt="image" src="https://github.com/user-attachments/assets/9ab26499-6874-460e-bdb1-20f0ebec57e1" />
+
+#El Piloto de las Mil Batalla 
+
+<img width="2362" height="1368" alt="image" src="https://github.com/user-attachments/assets/5a5b1b2b-59b5-4a9d-93d6-e6054ad4cb08" />
+
+#El Rey Del Circuito
+
+<img width="2362" height="1368" alt="image" src="https://github.com/user-attachments/assets/b364189d-8754-44c7-a77f-070ad16f4644" />
 
 ---
 
