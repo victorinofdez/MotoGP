@@ -10,32 +10,36 @@ models:
       Permite responder quién es el rey histórico de cada circuito.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - rider_id
-            - circuit_id
-            - category_id
+          arguments: 
+            combination_of_columns:
+              - rider_id
+              - circuit_id
+              - category_id
     columns:
       - name: rider_id
         description: FK a dim_rider
         tests:
           - not_null
           - relationships:
-              to: ref('dim_rider')
-              field: rider_id
+              arguments: 
+                to: ref('dim_rider')
+                field: rider_id
       - name: circuit_id
         description: FK a dim_circuit
         tests:
           - not_null
           - relationships:
-              to: ref('dim_circuit')
-              field: circuit_id
+              arguments: 
+                to: ref('dim_circuit')
+                field: circuit_id
       - name: category_id
         description: FK a dim_category
         tests:
           - not_null
           - relationships:
-              to: ref('dim_category')
-              field: category_id
+              arguments: 
+                to: ref('dim_category')
+                field: category_id
       - name: total_entries
         description: Total de carreras disputadas en ese circuito
       - name: total_points

@@ -24,25 +24,29 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: [true, false]
+              arguments: 
+                values: [true, false]
 
       - name: is_qualifying
         description: Indica si la sesión sirve para definir la posición de salida en parrilla.
         tests:
           - not_null
           - accepted_values:
-              values: [true, false]
+              arguments: 
+                values: [true, false]
 
       - name: is_practice
         description: Indica si la sesión corresponde a entrenamientos libres o cronometrados.
         tests:
           - not_null
           - accepted_values:
-              values: [true, false]
+              arguments: 
+                values: [true, false]
 
       - name: is_warmup
         description: Indica si la sesión corresponde a un warm-up previo a la carrera.
         tests:
           - not_null
           - accepted_values:
-              values: [true, false]
+              arguments: 
+                values: [true, false]

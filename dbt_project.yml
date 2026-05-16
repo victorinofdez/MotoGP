@@ -36,30 +36,23 @@ clean-targets:         # directories to be removed by `dbt clean`
 # using the `{{ config(...) }}` macro.
 
 models:
-
   +transient: false
-  
   MotoGP:
-
     staging:
       +materialized: table
       +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
-
     intermediate:
       +materialized: view
       +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
-      
     marts:
       +materialized: table
       +schema: GOLD
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_GOLD_DB"
 
 seeds:
-
   MotoGP:
-  
     session_type:
       +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
