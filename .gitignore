@@ -7,3 +7,4 @@ dbt_internal_packages/
 .DS_Store
 .env
 motogp_data_*
+.env.*
