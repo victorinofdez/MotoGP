@@ -82,8 +82,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_season')
-              field: season_id
+              arguments: 
+                to: ref('stg_season')
+                field: season_id
 
       - name: country_iso
         data_type: varchar
