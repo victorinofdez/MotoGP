@@ -10,7 +10,7 @@
 with source as (
     select * from {{ source('raw', 'results') }}
     {% if is_incremental() %}
-    where _ingested_at > (select max(dest._ingested_at) from {{ this }} dest)
+        where _ingested_at > (select max(dest._ingested_at) from {{ this }} dest)
     {% endif %}
 ),
 renamed as (
