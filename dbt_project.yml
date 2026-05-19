@@ -56,3 +56,8 @@ seeds:
     session_type:
       +schema: SILVER
       +database: "{{ env_var('DBT_ENVIRONMENTS', 'FAIL') }}_MOTOGP_SILVER_DB"
+
+tests:
+  MotoGP:
+    +severity: warn
+    +store_failures: true
